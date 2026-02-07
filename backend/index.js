@@ -5,10 +5,12 @@ const morgan = require('morgan');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const sequelize = require('./config/db');
+const passport = require('passport');
 const checkApiKey = require('./middleware/checkApiKey');
 
 const eventsRoutes = require('./routes/events');
 const usersRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +19,9 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors());
 app.use(morgan('combined'));
+
+// Инициализация passport
+app.use(passport.initialize());
 
 // Swagger документация
 const swaggerOptions = {
@@ -57,7 +62,8 @@ app.get('/', (req, res) => {
   });
 });
 
-// API маршруты с проверкой ключа
+// API маршруты
+app.use('/auth', authRoutes);
 app.use('/events', checkApiKey, eventsRoutes);
 app.use('/users', checkApiKey, usersRoutes);
 

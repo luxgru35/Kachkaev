@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
+const checkTokenBlacklist = require('../middleware/checkTokenBlacklist');
+const passport = require('passport');
 
 /**
  * @swagger
@@ -59,7 +61,7 @@ router.post('/', async (req, res) => {
  *       200:
  *         description: List of all users
  */
-router.get('/', async (req, res) => {
+router.get('/', checkTokenBlacklist, async (req, res) => {
   try {
     const users = await User.findAll({
       where: { deletedAt: null },
@@ -90,7 +92,7 @@ router.get('/', async (req, res) => {
  *       404:
  *         description: User not found
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
 

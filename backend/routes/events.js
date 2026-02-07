@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { Event, User } = require('../models');
 const checkEventLimit = require('../middleware/checkEventLimit');
+const checkTokenBlacklist = require('../middleware/checkTokenBlacklist');
+const passport = require('passport');
 const { Op } = require('sequelize');
 
 /**
@@ -38,7 +40,7 @@ const { Op } = require('sequelize');
  *       429:
  *         description: Too many events created
  */
-router.post('/', checkEventLimit, async (req, res) => {
+router.post('/', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), checkEventLimit, async (req, res) => {
   try {
     const { title, description, date, createdBy } = req.body;
 
@@ -106,7 +108,7 @@ router.post('/', checkEventLimit, async (req, res) => {
  *       200:
  *         description: List of events
  */
-router.get('/', async (req, res) => {
+router.get('/', checkTokenBlacklist, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -176,7 +178,7 @@ router.get('/', async (req, res) => {
  *       404:
  *         description: Event not found
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', checkTokenBlacklist, async (req, res) => {
   try {
     const event = await Event.findOne({
       where: { id: req.params.id, deletedAt: null },
@@ -226,7 +228,7 @@ router.get('/:id', async (req, res) => {
  *       404:
  *         description: Event not found
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const event = await Event.findOne({
       where: { id: req.params.id, deletedAt: null },
@@ -273,7 +275,7 @@ router.put('/:id', async (req, res) => {
  *       404:
  *         description: Event not found
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
 
