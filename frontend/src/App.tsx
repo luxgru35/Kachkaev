@@ -8,6 +8,7 @@ import { EventsPage } from '@pages/Events/Events';
 import { ProfilePage } from '@pages/Profile/Profile';
 import { NotFoundPage } from '@pages/NotFound/NotFound';
 import { EventFormModal } from '@components/EventFormModal/EventFormModal';
+import { ParticipantsModal } from '@components/ParticipantsModal/ParticipantsModal';
 import './App.scss';
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <EventFormModal />
+        <ParticipantsModal />
       </Layout>
     </Router>
   );

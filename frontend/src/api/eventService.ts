@@ -51,4 +51,13 @@ export const eventService = {
   deleteEvent: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/events/${id}`);
   },
+
+  joinEvent: async (id: number): Promise<void> => {
+    await axiosInstance.post(`/events/${id}/join`);
+  },
+
+  getParticipants: async (id: number): Promise<any[]> => {
+    const response = await axiosInstance.get(`/events/${id}/participants`);
+    return response.data;
+  },
 };

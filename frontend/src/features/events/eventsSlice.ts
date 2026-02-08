@@ -93,6 +93,18 @@ export const deleteEvent = createAsyncThunk(
   }
 );
 
+export const joinEvent = createAsyncThunk(
+  'events/joinEvent',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await eventService.joinEvent(id);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.error || 'Ошибка при присоединении к событию');
+    }
+  }
+);
+
 const eventsSlice = createSlice({
   name: 'events',
   initialState,
@@ -165,6 +177,27 @@ const eventsSlice = createSlice({
         state.events = state.events.filter((e) => e.id !== action.payload);
       })
       .addCase(deleteEvent.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.error = action.payload as string;
+      })
+      .addCase(joinEvent.pending, (state) => {
+        state.isLoading = true;
+        state.isError = false;
+        state.error = null;
+      })
+      .addCase(joinEvent.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const index = state.events.findIndex((e) => e.id === action.payload);
+        if (index !== -1) {
+          state.events[index] = {
+            ...state.events[index],
+            participantsCount: (state.events[index].participantsCount || 0) + 1,
+            isUserParticipant: true,
+          };
+        }
+      })
+      .addCase(joinEvent.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
         state.error = action.payload as string;
