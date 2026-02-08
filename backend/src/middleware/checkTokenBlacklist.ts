@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import TokenBlacklist from '@models/TokenBlacklist.js';
+import TokenBlacklist from '../models/TokenBlacklist.js';
 
 interface JwtPayload {
   id: number;

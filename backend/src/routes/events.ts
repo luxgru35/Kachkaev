@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { Op } from 'sequelize';
-import { Event, User } from '@models/index.js';
-import checkEventLimit from '@middleware/checkEventLimit.js';
-import checkTokenBlacklist from '@middleware/checkTokenBlacklist.js';
+import { Event, User } from '../models/index.js';
+import checkEventLimit from '../middleware/checkEventLimit.js';
+import checkTokenBlacklist from '../middleware/checkTokenBlacklist.js';
 import passport from 'passport';
 
 interface EventBody {
@@ -80,7 +80,7 @@ router.post(
  *     summary: Get all events with optional filters
  *     tags: [Events]
  */
-router.get('/', checkTokenBlacklist, async (req: Request, res: Response): Promise<void> => {
+router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req: Request, res: Response): Promise<void> => {
   try {
     const query = req.query as QueryParams;
     const page = parseInt(query.page || '1') || 1;

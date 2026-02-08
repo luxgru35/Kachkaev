@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { User } from '@models/index.js';
-import checkTokenBlacklist from '@middleware/checkTokenBlacklist.js';
+import { User } from '../models/index.js';
+import checkTokenBlacklist from '../middleware/checkTokenBlacklist.js';
 import passport from 'passport';
 
 interface AuthRequest extends Request {

@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '@config/db.js';
-import User from '@models/User.js';
+import sequelize from '../config/db.js';
+import User from './User.js';
 
 interface IEvent {
   id: number;
