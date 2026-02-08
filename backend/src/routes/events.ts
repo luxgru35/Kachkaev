@@ -23,6 +23,7 @@ interface QueryParams {
   startDate?: string;
   endDate?: string;
   includeSoftDeleted?: string;
+  createdBy?: string;
 }
 
 const router = Router();
@@ -80,7 +81,7 @@ router.post(
  *     summary: Get all events with optional filters
  *     tags: [Events]
  */
-router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req: Request, res: Response): Promise<void> => {
+router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: false }), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const query = req.query as QueryParams;
     const page = parseInt(query.page || '1') || 1;
@@ -89,6 +90,8 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
     const startDate = query.startDate;
     const endDate = query.endDate;
     const includeSoftDeleted = query.includeSoftDeleted === 'true';
+    const createdBy = query.createdBy ? parseInt(query.createdBy) : undefined;
+    const userId = (req.user as any)?.id;
 
     const offset = (page - 1) * limit;
     const where: any = {};
@@ -96,6 +99,10 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
     // Добавляем фильтр по deletedAt только если не включены удаленные
     if (!includeSoftDeleted) {
       where.deletedAt = null;
+    }
+
+    if (createdBy) {
+      where.createdBy = createdBy;
     }
 
     if (search) {
@@ -115,6 +122,8 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
       }
     }
 
+    const { EventParticipant } = await import('../models/index.js');
+
     const { count, rows } = await Event.findAndCountAll({
       where,
       include: [{ model: User, as: 'creator' }],
@@ -123,12 +132,34 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
       order: [['createdAt', 'DESC']],
     });
 
+    // Add participant count and user participation status
+    const enrichedData = await Promise.all(
+      rows.map(async (event: any) => {
+        const participantCount = await EventParticipant.count({
+          where: { eventId: event.id },
+        });
+
+        const userParticipation = userId
+          ? await EventParticipant.findOne({
+              where: { eventId: event.id, userId },
+            })
+          : null;
+
+        return {
+          ...event.toJSON(),
+          participantsCount: participantCount,
+          isUserParticipant: !!userParticipation,
+          isCreatedByUser: event.createdBy === userId,
+        };
+      })
+    );
+
     res.json({
       total: count,
       page,
       limit,
       pages: Math.ceil(count / limit),
-      data: rows,
+      data: enrichedData,
     });
   } catch (error: any) {
     console.error('Error fetching events:', error);
@@ -233,6 +264,110 @@ router.delete(
       res.json({ message: 'Event deleted successfully' });
     } catch (error: any) {
       console.error('Error deleting event:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /events/{id}/join:
+ *   post:
+ *     summary: Join an event as participant
+ *     tags: [Events]
+ */
+router.post(
+  '/:id/join',
+  checkTokenBlacklist,
+  passport.authenticate('jwt', { session: false }),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = (req.user as any)?.id;
+
+      if (!userId) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const eventId = Array.isArray(id) ? id[0] : id;
+      const event = await Event.findByPk(eventId);
+      if (!event) {
+        res.status(404).json({ error: 'Event not found' });
+        return;
+      }
+
+      // Check if user is creator
+      if ((event as any).createdBy === userId) {
+        res.status(400).json({ error: 'Cannot join your own event' });
+        return;
+      }
+
+      // Import EventParticipant here to avoid circular dependencies
+      const { EventParticipant } = await import('../models/index.js');
+      
+      // Check if already participant
+      const existing = await EventParticipant.findOne({
+        where: { eventId: eventId, userId },
+      });
+
+      if (existing) {
+        res.status(400).json({ error: 'Already a participant' });
+        return;
+      }
+
+      // Add participant
+      await EventParticipant.create({
+        eventId: parseInt(eventId as string, 10),
+        userId,
+      });
+      res.json({ message: 'Joined event successfully' });
+    } catch (error: any) {
+      console.error('Error joining event:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /events/{id}/participants:
+ *   get:
+ *     summary: Get event participants
+ *     tags: [Events]
+ */
+router.get(
+  '/:id/participants',
+  checkTokenBlacklist,
+  passport.authenticate('jwt', { session: false }),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const eventId = Array.isArray(id) ? id[0] : id;
+      
+      const event = await Event.findByPk(eventId);
+      if (!event) {
+        res.status(404).json({ error: 'Event not found' });
+        return;
+      }
+
+      // Import EventParticipant here
+      const { EventParticipant } = await import('../models/index.js');
+      
+      const participants = await EventParticipant.findAll({
+        where: { eventId: eventId },
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'email'],
+          },
+        ],
+      });
+
+      res.json(participants);
+    } catch (error: any) {
+      console.error('Error getting participants:', error);
       res.status(500).json({ error: error.message });
     }
   }

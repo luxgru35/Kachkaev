@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { tokenUtils } from '@utils/tokenUtils';
+import { useAppDispatch, useAppSelector } from '@app/hooks';
+import { logoutUser } from '@features/auth/authSlice';
 import styles from './Layout.module.scss';
 
 interface LayoutProps {
@@ -9,11 +10,12 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const location = useLocation();
-  const user = tokenUtils.getUser();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const handleLogout = () => {
-    tokenUtils.logout();
+    dispatch(logoutUser());
     navigate('/login');
   };
 
@@ -28,7 +30,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             📅 EventApp
           </div>
           <nav className={styles.nav}>
-            {!isAuthPage && user && (
+            {!isAuthPage && isAuthenticated && user && (
               <>
                 <button
                   onClick={() => navigate('/events')}
@@ -36,13 +38,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Мероприятия
                 </button>
+                <button
+                  onClick={() => navigate('/profile')}
+                  className={location.pathname === '/profile' ? styles.active : ''}
+                >
+                  Профиль
+                </button>
                 <span className={styles.userInfo}>{user.name}</span>
                 <button onClick={handleLogout} className={styles.logoutBtn}>
                   Выход
                 </button>
               </>
             )}
-            {!isAuthPage && !user && (
+            {!isAuthPage && !isAuthenticated && (
               <>
                 <button onClick={() => navigate('/login')}>Вход</button>
                 <button

@@ -1,47 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '@api/authService';
-import { tokenUtils } from '@utils/tokenUtils';
+import { useAppDispatch, useAppSelector } from '@app/hooks';
+import { registerUser, clearError } from '@features/auth/authSlice';
 import { ErrorDisplay } from '@components/ErrorDisplay';
 import styles from './Register.module.scss';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isLoading, isError, error, isAuthenticated } = useAppSelector((state) => state.auth);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Редирект если уже авторизован
   useEffect(() => {
-    if (tokenUtils.isAuthenticated()) {
+    if (isAuthenticated) {
       navigate('/events');
     }
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
+    dispatch(clearError());
 
-    try {
-      await authService.register(name, email, password);
-      navigate('/login');
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        'Ошибка при регистрации';
-      setError(message);
-    } finally {
-      setLoading(false);
+    if (!name || !email || !password) {
+      return;
     }
+
+    dispatch(registerUser({ email, password, name }));
   };
 
   return (
     <div className={styles.container}>
-      <ErrorDisplay error={error} onDismiss={() => setError(null)} />
+      {isError && <ErrorDisplay error={error} onDismiss={() => dispatch(clearError())} />}
       <div className={styles.card}>
         <h1>Регистрация</h1>
         <form onSubmit={handleSubmit}>
@@ -53,7 +45,7 @@ export const RegisterPage: React.FC = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
           <div className={styles.formGroup}>
@@ -64,7 +56,7 @@ export const RegisterPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
           <div className={styles.formGroup}>
@@ -75,11 +67,11 @@ export const RegisterPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
-          <button type="submit" disabled={loading} className={styles.submitBtn}>
-            {loading ? 'Загрузка...' : 'Регистрация'}
+          <button type="submit" disabled={isLoading} className={styles.submitBtn}>
+            {isLoading ? 'Загрузка...' : 'Регистрация'}
           </button>
         </form>
         <p className={styles.footer}>
