@@ -5,7 +5,7 @@
     "lib": ["ES2020"],
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "noImplicitAny": false,
     "paths": {
       "@models/*": ["models/*"],
@@ -23,6 +23,13 @@
       "@types/*": ["types/*"]
     }
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"],
+  "ts-node": {
+    "esm": true,
+    "experimentalEsm": true,
+    "compilerOptions": {
+      "module": "ES2020"
+    }
+  }
 }

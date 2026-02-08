@@ -1,6 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import bcrypt from 'bcryptjs';
-import sequelize from '@config/db.js';
+import sequelize from '../config/db.js';
 
 interface IUser {
   id: number;

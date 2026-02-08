@@ -1,0 +1,54 @@
+.errorContainer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}
+
+.errorContent {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+
+  h3 {
+    margin: 0 0 10px 0;
+    color: #721c24;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    color: #721c24;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  button {
+    background-color: #721c24;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      background-color: #5a151c;
+    }
+  }
+}

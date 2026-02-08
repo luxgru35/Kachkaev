@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import { User, TokenBlacklist } from '@models/index.js';
+import { User, TokenBlacklist } from '../models/index.js';
 
 interface RegisterBody {
   name: string;

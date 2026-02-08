@@ -1,0 +1,161 @@
+.container {
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    color: #2c3e50;
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #3498db;
+    background-color: #f9f9f9;
+  }
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+  }
+
+  span {
+    color: #2c3e50;
+    font-size: 14px;
+  }
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  color: #7f8c8d;
+}
+
+.eventsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.eventCard {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  &.deleted {
+    opacity: 0.7;
+    border: 2px solid #e74c3c;
+
+    .cardHeader {
+      background-color: #fef5f5;
+    }
+  }
+}
+
+.cardHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    flex: 1;
+  }
+}
+
+.status {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.cardContent {
+  padding: 1.5rem;
+}
+
+.description {
+  margin: 0 0 1rem 0;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 13px;
+  color: #555;
+
+  .label {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .controls {
+    width: 100%;
+  }
+
+  .eventsList {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,11 +5,12 @@ import morgan from 'morgan';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import passport from 'passport';
-import sequelize from '@config/db.js';
-import checkApiKey from '@middleware/checkApiKey.js';
-import eventsRoutes from '@routes/events.js';
-import usersRoutes from '@routes/users.js';
-import authRoutes from '@routes/auth.js';
+import './config/passport.js';
+import sequelize from './config/db.js';
+import checkApiKey from './middleware/checkApiKey.js';
+import eventsRoutes from './routes/events.js';
+import usersRoutes from './routes/users.js';
+import authRoutes from './routes/auth.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;

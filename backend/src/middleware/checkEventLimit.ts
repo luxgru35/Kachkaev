@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Op } from 'sequelize';
-import Event from '@models/Event.js';
+import Event from '../models/Event.js';
 
 const checkEventLimit = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
