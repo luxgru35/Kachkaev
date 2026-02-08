@@ -1,16 +1,34 @@
 import axiosInstance from './axios';
 import type { Event, EventListParams } from '../types';
 
+export interface EventsResponse {
+  data: Event[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 export const eventService = {
-  getAllEvents: async (params?: EventListParams): Promise<Event[]> => {
-    const response = await axiosInstance.get<{
-      data: Event[];
-      total: number;
-      page: number;
-      pages: number;
-    }>('/events', {
+  getEvents: async (
+    page: number = 1,
+    includeSoftDeleted: boolean = false,
+    createdBy?: string
+  ): Promise<EventsResponse> => {
+    const response = await axiosInstance.get<EventsResponse>('/events', {
       params: {
-        ...(params?.includeSoftDeleted && { includeSoftDeleted: true }),
+        page,
+        limit: 10,
+        ...(includeSoftDeleted && { includeSoftDeleted: 'true' }),
+        ...(createdBy && { createdBy }),
+      },
+    });
+    return response.data;
+  },
+
+  getAllEvents: async (params?: EventListParams): Promise<Event[]> => {
+    const response = await axiosInstance.get<EventsResponse>('/events', {
+      params: {
+        ...(params?.includeSoftDeleted && { includeSoftDeleted: 'true' }),
       },
     });
     return response.data.data;
@@ -21,38 +39,29 @@ export const eventService = {
     return response.data;
   },
 
-  createEvent: async (
-    title: string,
-    description: string,
-    date: string
-  ): Promise<Event> => {
-    const response = await axiosInstance.post<Event>('/events', {
-      title,
-      description,
-      date,
-    });
+  createEvent: async (data: {
+    title: string;
+    description: string;
+    date: string;
+    createdBy: string;
+  }): Promise<any> => {
+    const response = await axiosInstance.post('/events', data);
     return response.data;
   },
 
   updateEvent: async (
-    id: number,
-    title?: string,
-    description?: string,
-    date?: string
-  ): Promise<Event> => {
-    const response = await axiosInstance.put<Event>(`/events/${id}`, {
-      ...(title && { title }),
-      ...(description && { description }),
-      ...(date && { date }),
-    });
+    id: number | string,
+    data?: { title?: string; description?: string; date?: string }
+  ): Promise<any> => {
+    const response = await axiosInstance.put(`/events/${id}`, data);
     return response.data;
   },
 
-  deleteEvent: async (id: number): Promise<void> => {
+  deleteEvent: async (id: number | string): Promise<void> => {
     await axiosInstance.delete(`/events/${id}`);
   },
 
-  joinEvent: async (id: number): Promise<void> => {
+  joinEvent: async (id: number | string): Promise<void> => {
     await axiosInstance.post(`/events/${id}/join`);
   },
 

@@ -36,7 +36,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({ where: { email, deletedAt: null } });
     if (existingUser) {
       res.status(400).json({ error: 'User with this email already exists' });
       return;
@@ -73,7 +73,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email, deletedAt: null } });
     if (!user) {
       res.status(401).json({ error: 'Invalid email or password' });
       return;

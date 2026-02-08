@@ -1,12 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { tokenUtils } from '@utils/tokenUtils';
+import { useAppSelector } from '@app/hooks';
 import styles from './Home.module.scss';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const user = tokenUtils.getUser();
-  const isAuthenticated = tokenUtils.isAuthenticated();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
   return (
     <div className={styles.container}>

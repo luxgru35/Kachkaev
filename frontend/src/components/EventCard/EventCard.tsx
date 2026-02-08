@@ -45,7 +45,6 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isLoading }) => {
       <p className={styles.description}>{event.description}</p>
 
       <div className={styles.meta}>
-        <span className={styles.location}>📍 {event.location}</span>
         {isDeleted && event.deletedAt && (
           <span className={styles.deletedDate}>
             Удалено: {new Date(event.deletedAt).toLocaleDateString('ru-RU')}

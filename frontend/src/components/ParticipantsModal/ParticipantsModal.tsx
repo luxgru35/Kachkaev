@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@app/hooks';
-import { closeModal } from '@features/ui  /uiSlice';
+import { closeModal } from "@features/ui/uiSlice";
 import { eventService } from '@api/eventService';
 import styles from './ParticipantsModal.module.scss';
 
@@ -64,8 +64,8 @@ export const ParticipantsModal: React.FC = () => {
               {participants.map((participant) => (
                 <div key={participant.id} className={styles.participant}>
                   <div className={styles.info}>
-                    <h3>{participant.user.name}</h3>
-                    <p>{participant.user.email}</p>
+                    <h3>{participant.user?.name ?? 'Участник'}</h3>
+                    <p>{participant.user?.email ?? ''}</p>
                   </div>
                 </div>
               ))}
