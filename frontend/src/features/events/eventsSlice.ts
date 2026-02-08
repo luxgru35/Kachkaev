@@ -6,7 +6,6 @@ export interface Event {
   title: string;
   description: string;
   date: string;
-  location: string;
   createdBy: string;
   createdByName: string;
   participantsCount: number;
@@ -17,11 +16,13 @@ export interface Event {
 
 export interface EventsState {
   events: Event[];
+  userEvents: Event[];
   currentEvent: Event | null;
   total: number;
   page: number;
   pages: number;
   isLoading: boolean;
+  isUserEventsLoading: boolean;
   isError: boolean;
   error: string | null;
   includeSoftDeleted: boolean;
@@ -29,11 +30,13 @@ export interface EventsState {
 
 const initialState: EventsState = {
   events: [],
+  userEvents: [],
   currentEvent: null,
   total: 0,
   page: 1,
   pages: 0,
   isLoading: false,
+  isUserEventsLoading: false,
   isError: false,
   error: null,
   includeSoftDeleted: false,
@@ -42,11 +45,15 @@ const initialState: EventsState = {
 export const fetchEvents = createAsyncThunk(
   'events/fetchEvents',
   async (
-    { page, includeSoftDeleted }: { page: number; includeSoftDeleted: boolean },
+    {
+      page,
+      includeSoftDeleted,
+      createdBy,
+    }: { page: number; includeSoftDeleted: boolean; createdBy?: string },
     { rejectWithValue }
   ) => {
     try {
-      const response = await eventService.getEvents(page, includeSoftDeleted);
+      const response = await eventService.getEvents(page, includeSoftDeleted, createdBy);
       return response;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || 'Ошибка при загрузке событий');
@@ -54,12 +61,44 @@ export const fetchEvents = createAsyncThunk(
   }
 );
 
+export const fetchUserEvents = createAsyncThunk(
+  'events/fetchUserEvents',
+  async (userId: string | number, { rejectWithValue }) => {
+    try {
+      const response = await eventService.getEvents(1, false, String(userId));
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.error || 'Ошибка при загрузке мероприятий');
+    }
+  }
+);
+
 export const createEvent = createAsyncThunk(
   'events/createEvent',
-  async (eventData: Omit<Event, 'id' | 'createdBy' | 'createdByName' | 'participantsCount' | 'deletedAt' | 'isCreatedByUser' | 'isUserParticipant'>, { rejectWithValue }) => {
+  async (
+    eventData: { title: string; description: string; date: string },
+    { rejectWithValue, getState }
+  ) => {
     try {
-      const response = await eventService.createEvent(eventData);
-      return response;
+      const state = getState() as { auth: { user: { id: string } | null } };
+      const userId = state.auth.user?.id;
+      if (!userId) {
+        return rejectWithValue('Пользователь не авторизован');
+      }
+      const response = await eventService.createEvent({
+        ...eventData,
+        createdBy: userId,
+      });
+      return {
+        ...response,
+        id: String(response.id),
+        createdBy: userId,
+        createdByName: response.creator?.name || '',
+        participantsCount: 0,
+        deletedAt: null,
+        isCreatedByUser: true,
+        isUserParticipant: false,
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || 'Ошибка при создании события');
     }
@@ -126,7 +165,14 @@ const eventsSlice = createSlice({
       })
       .addCase(fetchEvents.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.events = action.payload.data;
+        state.events = action.payload.data.map((e: any) => ({
+          ...e,
+          id: String(e.id),
+          createdByName: e.creator?.name ?? e.createdByName ?? '',
+          participantsCount: e.participantsCount ?? 0,
+          isCreatedByUser: e.isCreatedByUser ?? false,
+          isUserParticipant: e.isUserParticipant ?? false,
+        }));
         state.total = action.payload.total;
         state.page = action.payload.page;
         state.pages = action.payload.pages;
@@ -135,6 +181,24 @@ const eventsSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.error = action.payload as string;
+      })
+      .addCase(fetchUserEvents.pending, (state) => {
+        state.isUserEventsLoading = true;
+      })
+      .addCase(fetchUserEvents.fulfilled, (state, action) => {
+        state.isUserEventsLoading = false;
+        state.userEvents = action.payload.data.map((e: any) => ({
+          ...e,
+          id: String(e.id),
+          createdByName: e.creator?.name ?? e.createdByName ?? '',
+          participantsCount: e.participantsCount ?? 0,
+          isCreatedByUser: e.isCreatedByUser ?? true,
+          isUserParticipant: e.isUserParticipant ?? false,
+        }));
+      })
+      .addCase(fetchUserEvents.rejected, (state, action) => {
+        state.isUserEventsLoading = false;
+        state.userEvents = [];
       })
       .addCase(createEvent.pending, (state) => {
         state.isLoading = true;

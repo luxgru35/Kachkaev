@@ -10,7 +10,6 @@ interface EventFormData {
   title: string;
   description: string;
   date: string;
-  location: string;
 }
 
 export const EventFormModal: React.FC = () => {
@@ -35,13 +34,11 @@ export const EventFormModal: React.FC = () => {
           title: selectedEvent.title,
           description: selectedEvent.description,
           date: selectedEvent.date.split('T')[0],
-          location: selectedEvent.location,
         }
       : {
           title: '',
           description: '',
           date: new Date().toISOString().split('T')[0],
-          location: '',
         },
   });
 
@@ -55,7 +52,6 @@ export const EventFormModal: React.FC = () => {
           title: data.title,
           description: data.description,
           date: new Date(data.date).toISOString(),
-          location: data.location,
         })
       );
     } else if (modalType === 'edit' && selectedEvent) {
@@ -66,7 +62,6 @@ export const EventFormModal: React.FC = () => {
             title: data.title,
             description: data.description,
             date: new Date(data.date).toISOString(),
-            location: data.location,
           },
         })
       );
@@ -82,14 +77,12 @@ export const EventFormModal: React.FC = () => {
         title: selectedEvent.title,
         description: selectedEvent.description,
         date: selectedEvent.date.split('T')[0],
-        location: selectedEvent.location,
       });
     } else if (modalType === 'create') {
       reset({
         title: '',
         description: '',
         date: new Date().toISOString().split('T')[0],
-        location: '',
       });
     }
   }, [modalType, selectedEvent, reset]);
@@ -164,22 +157,6 @@ export const EventFormModal: React.FC = () => {
               disabled={isLoading}
             />
             {errors.date && <span className={styles.error}>{errors.date.message}</span>}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="location">Место проведения *</label>
-            <input
-              id="location"
-              type="text"
-              placeholder="Введите место проведения"
-              {...register('location', {
-                required: 'Место проведения обязательно',
-                minLength: { value: 3, message: 'Минимум 3 символа' },
-                maxLength: { value: 100, message: 'Максимум 100 символов' },
-              })}
-              disabled={isLoading}
-            />
-            {errors.location && <span className={styles.error}>{errors.location.message}</span>}
           </div>
 
           <div className={styles.actions}>

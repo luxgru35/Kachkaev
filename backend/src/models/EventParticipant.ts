@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
+import User from './User.js';
 
 interface IEventParticipant {
   id: number;
@@ -50,5 +51,7 @@ const EventParticipant = sequelize.define<any>(
     ],
   }
 );
+
+EventParticipant.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export default EventParticipant;

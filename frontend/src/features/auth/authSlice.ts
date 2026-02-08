@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '@api/authService';
+import { tokenUtils } from '@utils/tokenUtils';
 
 export interface User {
   id: string;
@@ -16,13 +17,19 @@ export interface AuthState {
   isAuthenticated: boolean;
 }
 
+const getInitialUser = (): User | null => {
+  const u = tokenUtils.getUser();
+  if (!u) return null;
+  return { ...u, id: String(u.id) };
+};
+
 const initialState: AuthState = {
-  user: null,
-  token: localStorage.getItem('access_token') || null,
+  user: getInitialUser(),
+  token: tokenUtils.getToken(),
   isLoading: false,
   isError: false,
   error: null,
-  isAuthenticated: !!localStorage.getItem('access_token'),
+  isAuthenticated: !!tokenUtils.getToken(),
 };
 
 export const loginUser = createAsyncThunk(
@@ -30,13 +37,25 @@ export const loginUser = createAsyncThunk(
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials.email, credentials.password);
-      localStorage.setItem('access_token', response.access_token);
-      return { user: response.user, token: response.access_token };
+      tokenUtils.setToken(response.token);
+      tokenUtils.setUser(response.user);
+      const user = { ...response.user, id: String(response.user.id) };
+      return { user, token: response.token };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || 'Ошибка при входе');
     }
   }
 );
+
+export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { rejectWithValue }) => {
+  try {
+    await authService.logout();
+  } catch (error: any) {
+    // Token might be expired - still clear local state
+  } finally {
+    tokenUtils.logout();
+  }
+});
 
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
@@ -45,7 +64,11 @@ export const registerUser = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await authService.register(credentials.email, credentials.password, credentials.name);
+      const response = await authService.register(
+        credentials.name,
+        credentials.email,
+        credentials.password
+      );
       return response;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || 'Ошибка при регистрации');
@@ -58,7 +81,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      localStorage.removeItem('access_token');
+      tokenUtils.logout();
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -101,6 +124,12 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.error = action.payload as string;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = null;
       });
   },
 });

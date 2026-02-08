@@ -23,6 +23,7 @@ interface QueryParams {
   startDate?: string;
   endDate?: string;
   includeSoftDeleted?: string;
+  createdBy?: string;
 }
 
 const router = Router();
@@ -89,6 +90,7 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
     const startDate = query.startDate;
     const endDate = query.endDate;
     const includeSoftDeleted = query.includeSoftDeleted === 'true';
+    const createdBy = query.createdBy ? parseInt(query.createdBy) : undefined;
     const userId = (req.user as any)?.id;
 
     const offset = (page - 1) * limit;
@@ -97,6 +99,10 @@ router.get('/', checkTokenBlacklist, passport.authenticate('jwt', { session: fal
     // Добавляем фильтр по deletedAt только если не включены удаленные
     if (!includeSoftDeleted) {
       where.deletedAt = null;
+    }
+
+    if (createdBy) {
+      where.createdBy = createdBy;
     }
 
     if (search) {
@@ -284,7 +290,8 @@ router.post(
         return;
       }
 
-      const event = await Event.findByPk(id);
+      const eventId = Array.isArray(id) ? id[0] : id;
+      const event = await Event.findByPk(eventId);
       if (!event) {
         res.status(404).json({ error: 'Event not found' });
         return;
@@ -301,7 +308,7 @@ router.post(
       
       // Check if already participant
       const existing = await EventParticipant.findOne({
-        where: { eventId: id, userId },
+        where: { eventId: eventId, userId },
       });
 
       if (existing) {
@@ -310,7 +317,10 @@ router.post(
       }
 
       // Add participant
-      await EventParticipant.create({ eventId: id, userId });
+      await EventParticipant.create({
+        eventId: parseInt(eventId as string, 10),
+        userId,
+      });
       res.json({ message: 'Joined event successfully' });
     } catch (error: any) {
       console.error('Error joining event:', error);
@@ -328,11 +338,14 @@ router.post(
  */
 router.get(
   '/:id/participants',
+  checkTokenBlacklist,
+  passport.authenticate('jwt', { session: false }),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
+      const eventId = Array.isArray(id) ? id[0] : id;
       
-      const event = await Event.findByPk(id);
+      const event = await Event.findByPk(eventId);
       if (!event) {
         res.status(404).json({ error: 'Event not found' });
         return;
@@ -342,7 +355,7 @@ router.get(
       const { EventParticipant } = await import('../models/index.js');
       
       const participants = await EventParticipant.findAll({
-        where: { eventId: id },
+        where: { eventId: eventId },
         include: [
           {
             model: User,
