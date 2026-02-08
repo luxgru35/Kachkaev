@@ -1,18 +1,17 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const sequelize = require('./config/db');
-const passport = require('passport');
-const checkApiKey = require('./middleware/checkApiKey');
+import 'dotenv/config';
+import express, { Express } from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import passport from 'passport';
+import sequelize from '@config/db.js';
+import checkApiKey from '@middleware/checkApiKey.js';
+import eventsRoutes from '@routes/events.js';
+import usersRoutes from '@routes/users.js';
+import authRoutes from '@routes/auth.js';
 
-const eventsRoutes = require('./routes/events');
-const usersRoutes = require('./routes/users');
-const authRoutes = require('./routes/auth');
-
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -20,17 +19,17 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('combined'));
 
-// Инициализация passport
+// Initialize passport
 app.use(passport.initialize());
 
-// Swagger документация
+// Swagger documentation
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Events Management API',
-      version: '1.0.0',
-      description: 'REST API для управления мероприятиями',
+      version: '2.0.0',
+      description: 'REST API for managing events with TypeScript',
     },
     servers: [
       {
@@ -45,46 +44,51 @@ const swaggerOptions = {
           in: 'header',
           name: 'x-api-key',
         },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
       },
     },
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Тестовый маршрут
-app.get('/', (req, res) => {
+// Test route
+app.get('/', (_req, res): void => {
   res.json({
-    message: 'Welcome to Events Management API',
+    message: 'Welcome to Events Management API v2.0',
     documentation: '/api-docs',
   });
 });
 
-// API маршруты
+// API routes
 app.use('/auth', authRoutes);
 app.use('/events', checkApiKey, eventsRoutes);
 app.use('/users', checkApiKey, usersRoutes);
 
-// Обработка ошибок 404
-app.use((req, res) => {
+// 404 handler
+app.use((_req, res): void => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Функция для синхронизации БД и запуска сервера
-async function startServer() {
+// Function to start server
+async function startServer(): Promise<void> {
   try {
-    // Проверка подключения к БД
+    // Check database connection
     await sequelize.authenticate();
     console.log('✓ Database connection established');
 
-    // Синхронизация моделей с БД
+    // Sync models
     await sequelize.sync({ alter: true });
     console.log('✓ Database models synchronized');
 
-    // Запуск сервера
-    app.listen(PORT, () => {
+    // Start server
+    app.listen(PORT, (): void => {
       console.log(`✓ Server running on http://localhost:${PORT}`);
       console.log(`✓ API documentation available at http://localhost:${PORT}/api-docs`);
     });
@@ -96,4 +100,4 @@ async function startServer() {
 
 startServer();
 
-module.exports = app;
+export default app;
